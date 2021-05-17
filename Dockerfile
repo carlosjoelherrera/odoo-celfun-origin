@@ -1,4 +1,4 @@
-FROM odoo:12
+FROM odoo:14
 LABEL maintainer="Nonpawit Teerachetmongkol <nonpawit.tee@aginix.tech>"
 
 # Copy to Workdir
