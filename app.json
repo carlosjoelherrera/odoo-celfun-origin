@@ -1,5 +1,5 @@
 {
-  "name": "odoo-cloud-run",
+  "name": "odoo-cloud-celfun",
   "env": {
     "DB_HOST": {
       "description": "The address of the postgres server. If you used a postgres container, set to the name of the container.",
