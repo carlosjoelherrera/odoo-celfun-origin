@@ -1,4 +1,4 @@
-# Copyright 2017-2018 Camptocamp SA
+# Copyright 2017-2019 Camptocamp SA
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html)
 
 import base64
@@ -41,10 +41,8 @@ def clean_fs(files):
 class IrAttachment(models.Model):
     _inherit = 'ir.attachment'
 
-    _local_fields = ('image_small', 'image_medium', 'web_icon_data')
-
     def _register_hook(self):
-        super(IrAttachment, self)._register_hook()
+        super()._register_hook()
         location = self.env.context.get('storage_location') or self._storage()
         # ignore if we are not using an object storage
         if location not in self._get_stores():
@@ -113,7 +111,7 @@ class IrAttachment(models.Model):
             domain = OR([domain, part])
         return domain
 
-    def _store_in_db_instead_of_object_storage(self):
+    def _store_in_db_instead_of_object_storage(self, data, mimetype):
         """ Return whether an attachment must be stored in db
 
         When we are using an Object Storage. This is sometimes required
@@ -156,49 +154,37 @@ class IrAttachment(models.Model):
         """
         storage_config = self._get_storage_force_db_config()
         for mimetype_key, limit in storage_config.items():
-            if self.mimetype.startswith(mimetype_key):
+            if mimetype.startswith(mimetype_key):
                 if not limit:
                     return True
-                bin_data = base64.b64decode(self.datas) if self.datas else b''
+                bin_data = base64.b64decode(data) if data else b''
                 return len(bin_data) <= limit
         return False
 
-    def _inverse_datas(self):
-        # override in order to store files that need fast access,
-        # we keep them in the database instead of the object storage
+    def _get_datas_related_values(self, data, mimetype):
         storage = self.env.context.get('storage_location') or self._storage()
-        for attach in self:
-            if storage in self._get_stores():
-                if self._store_in_db_instead_of_object_storage():
-                    # compute the fields that depend on datas
-                    value = attach.datas
-                    bin_data = base64.b64decode(value) if value else ''
-                    vals = {
-                        'file_size': len(bin_data),
-                        'checksum': self._compute_checksum(bin_data),
-                        # we seriously don't need index content on those fields
-                        'index_content': False,
-                        'store_fname': False,
-                        'db_datas': value,
-                    }
-                    fname = attach.store_fname
-                    # write as superuser, as user probably does not
-                    # have write access
-                    super(IrAttachment, attach.sudo()).write(vals)
-                    if fname:
-                        self._file_delete(fname)
-                    continue
-            super(IrAttachment, attach)._inverse_datas()
+        if data and storage in self._get_stores():
+            if self._store_in_db_instead_of_object_storage(data, mimetype):
+                # compute the fields that depend on datas
+                bin_data = base64.b64decode(data) if data else b''
+                values = {
+                    'file_size': len(bin_data),
+                    'checksum': self._compute_checksum(bin_data),
+                    'index_content': self._index(bin_data, mimetype),
+                    'store_fname': False,
+                    'db_datas': data,
+                }
+                return values
+        return super()._get_datas_related_values(data, mimetype)
 
     @api.model
-    def _file_read(self, fname):
+    def _file_read(self, fname, bin_size=False):
         if self._is_file_from_a_store(fname):
-            return self._store_file_read(fname)
+            return self._store_file_read(fname, bin_size=bin_size)
         else:
-            _super = super(IrAttachment, self)
-            return _super._file_read(fname)
+            return super()._file_read(fname, bin_size=bin_size)
 
-    def _store_file_read(self, fname):
+    def _store_file_read(self, fname, bin_size=False):
         storage = fname.partition('://')[0]
         raise NotImplementedError(
             'No implementation for %s' % (storage,)
@@ -225,13 +211,13 @@ class IrAttachment(models.Model):
                 key = self._compute_checksum(bin_data)
             filename = self._store_file_write(key, bin_data)
         else:
-            filename = super(IrAttachment, self)._file_write(value, checksum)
+            filename = super()._file_write(value, checksum)
         return filename
 
     @api.model
     def _file_delete(self, fname):
         if self._is_file_from_a_store(fname):
-            cr = self._cr
+            cr = self.env.cr
             # using SQL to include files hidden through unlink or due to record
             # rules
             cr.execute("SELECT COUNT(*) FROM ir_attachment "
@@ -240,7 +226,7 @@ class IrAttachment(models.Model):
             if not count:
                 self._store_file_delete(fname)
         else:
-            super(IrAttachment, self)._file_delete(fname)
+            super()._file_delete(fname)
 
     @api.model
     def _is_file_from_a_store(self, fname):
@@ -258,8 +244,8 @@ class IrAttachment(models.Model):
         """
         with api.Environment.manage():
             if new_cr:
-                registry = odoo.modules.registry.RegistryManager.get(
-                    self._cr.dbname
+                registry = odoo.modules.registry.Registry.new(
+                    self.env.cr.dbname
                 )
                 with closing(registry.cursor()) as cr:
                     try:
@@ -302,7 +288,7 @@ class IrAttachment(models.Model):
                 _('Only administrators can execute this action.'))
         location = self.env.context.get('storage_location') or self._storage()
         if location not in self._get_stores():
-            return super(IrAttachment, self).force_storage()
+            return super().force_storage()
         self._force_storage_to_object_storage()
 
     @api.model
@@ -360,7 +346,7 @@ class IrAttachment(models.Model):
                 # write them back in the DB (the logic for location to write is
                 # in the 'datas' inverse computed field)
                 attachment.write({'datas': attachment.datas})
-                # as the file will potentially be deleted from the bucket,
+                # as the file will potentially be dropped on the bucket,
                 # we should commit the changes here
                 new_env.cr.commit()
                 if current % 100 == 0 or total - current == 0:
@@ -397,7 +383,7 @@ class IrAttachment(models.Model):
                         # check that no other transaction has
                         # locked the row, don't send a file to storage
                         # in that case
-                        self._cr.execute("SELECT id "
+                        self.env.cr.execute("SELECT id "
                                             "FROM ir_attachment "
                                             "WHERE id = %s "
                                             "FOR UPDATE NOWAIT",
