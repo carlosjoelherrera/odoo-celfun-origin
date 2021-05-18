@@ -275,7 +275,6 @@ class IrAttachment(models.Model):
                 # make a copy
                 yield self.env()
 
-    @api.multi
     def _move_attachment_to_store(self):
         self.ensure_one()
         _logger.info('inspecting attachment %s (%d)', self.name, self.id)
