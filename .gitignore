@@ -2,6 +2,8 @@
 odoo/
 config/odoo.conf
 __pycache__
+.idea/
+.vscode/
 
 *.pyc
 
