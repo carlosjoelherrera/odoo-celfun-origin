@@ -135,7 +135,7 @@ class IrAttachment(models.Model):
                 )
             return read
         else:
-            return super()._store_file_read(fname, bin_size)
+            return super()._store_file_read(fname)
 
     @api.model
     def _store_file_write(self, key, bin_data):
