@@ -6,6 +6,7 @@ set -e
 # and pass them as arguments to the odoo process if not present in the config file
 : ${DB_HOST:=${DB_PORT_5432_TCP_ADDR:='db'}}
 : ${DB_PORT:=${DB_PORT_5432_TCP_PORT:=5432}}
+: ${DB_NAME:=${DB_NAME:='odoo_celfun'}}
 : ${DB_USER:=${DB_ENV_POSTGRES_USER:=${POSTGRES_USER:='odoo'}}}
 : ${DB_PASSWORD:=${DB_ENV_POSTGRES_PASSWORD:=${POSTGRES_PASSWORD:='odoo'}}}
 : ${PORT:=8080}
