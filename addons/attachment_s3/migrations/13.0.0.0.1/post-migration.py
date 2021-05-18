@@ -1,4 +1,4 @@
-# Copyright 2016-2018 Camptocamp SA
+# Copyright 2016-2019 Camptocamp SA
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html)
 
 import logging
@@ -23,7 +23,7 @@ def migrate(cr, version):
 
     if row[0] == 's3' and bucket:
         uid = odoo.SUPERUSER_ID
-        registry = odoo.modules.registry.RegistryManager.get(cr.dbname)
+        registry = odoo.modules.registry.Registry(cr.dbname)
         new_cr = registry.cursor()
         with closing(new_cr):
             with odoo.api.Environment.manage():
