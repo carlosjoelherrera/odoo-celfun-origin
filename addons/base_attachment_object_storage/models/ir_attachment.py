@@ -191,14 +191,14 @@ class IrAttachment(models.Model):
             super(IrAttachment, attach)._inverse_datas()
 
     @api.model
-    def _file_read(self, fname, bin_size=False):
+    def _file_read(self, fname):
         if self._is_file_from_a_store(fname):
-            return self._store_file_read(fname, bin_size=bin_size)
+            return self._store_file_read(fname)
         else:
             _super = super(IrAttachment, self)
-            return _super._file_read(fname, bin_size=bin_size)
+            return _super._file_read(fname)
 
-    def _store_file_read(self, fname, bin_size=False):
+    def _store_file_read(self, fname):
         storage = fname.partition('://')[0]
         raise NotImplementedError(
             'No implementation for %s' % (storage,)
