@@ -43,7 +43,7 @@ class IrAttachment(models.Model):
 
     _local_fields = ('image_small', 'image_medium', 'web_icon_data')
 
-    @api.cr
+    @api.multi
     def _register_hook(self):
         super(IrAttachment, self)._register_hook()
         location = self.env.context.get('storage_location') or self._storage()
