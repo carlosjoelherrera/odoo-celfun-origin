@@ -26,4 +26,4 @@ USER odoo
 ENV PORT 8080
 
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["odoo "]
+CMD ["odoo"]
