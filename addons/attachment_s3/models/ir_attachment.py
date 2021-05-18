@@ -2,7 +2,6 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html)
 
 
-import base64
 import logging
 import os
 import io
@@ -107,7 +106,7 @@ class IrAttachment(models.Model):
         return bucket
 
     @api.model
-    def _store_file_read(self, fname, bin_size=False):
+    def _store_file_read(self, fname):
         if fname.startswith('s3://'):
             s3uri = S3Uri(fname)
             try:
@@ -120,14 +119,12 @@ class IrAttachment(models.Model):
             try:
                 key = s3uri.item()
                 bucket.meta.client.head_object(
-                    Bucket=bucket.name,  Key=key
+                    Bucket=bucket.name, Key=key
                 )
-                if bin_size:
-                    return bucket.Object(key).content_length
                 with io.BytesIO() as res:
                     bucket.download_fileobj(key, res)
                     res.seek(0)
-                    read = base64.b64encode(res.read())
+                    read = res.read()
             except ClientError:
                 read = ''
                 _logger.info(

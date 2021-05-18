@@ -1,7 +1,6 @@
 # Copyright 2017-2019 Camptocamp SA
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html)
 
-import base64
 import inspect
 import logging
 import os
@@ -157,7 +156,7 @@ class IrAttachment(models.Model):
             if mimetype.startswith(mimetype_key):
                 if not limit:
                     return True
-                bin_data = base64.b64decode(data) if data else b''
+                bin_data = data
                 return len(bin_data) <= limit
         return False
 
@@ -166,7 +165,7 @@ class IrAttachment(models.Model):
         if data and storage in self._get_stores():
             if self._store_in_db_instead_of_object_storage(data, mimetype):
                 # compute the fields that depend on datas
-                bin_data = base64.b64decode(data) if data else b''
+                bin_data = data
                 values = {
                     'file_size': len(bin_data),
                     'checksum': self._compute_checksum(bin_data),
@@ -178,13 +177,13 @@ class IrAttachment(models.Model):
         return super()._get_datas_related_values(data, mimetype)
 
     @api.model
-    def _file_read(self, fname, bin_size=False):
+    def _file_read(self, fname):
         if self._is_file_from_a_store(fname):
-            return self._store_file_read(fname, bin_size=bin_size)
+            return self._store_file_read(fname)
         else:
             return super()._file_read(fname)
 
-    def _store_file_read(self, fname, bin_size=False):
+    def _store_file_read(self, fname):
         storage = fname.partition('://')[0]
         raise NotImplementedError(
             'No implementation for %s' % (storage,)
@@ -202,16 +201,15 @@ class IrAttachment(models.Model):
         )
 
     @api.model
-    def _file_write(self, value, checksum):
+    def _file_write(self, bin_data, checksum):
         location = self.env.context.get('storage_location') or self._storage()
         if location in self._get_stores():
-            bin_data = base64.b64decode(value)
             key = self.env.context.get('force_storage_key')
             if not key:
                 key = self._compute_checksum(bin_data)
             filename = self._store_file_write(key, bin_data)
         else:
-            filename = super()._file_write(value, checksum)
+            filename = super()._file_write(bin_data, checksum)
         return filename
 
     @api.model
