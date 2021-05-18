@@ -29,13 +29,13 @@ case "$1" in
     -- | odoo)
         shift
         if [[ "$1" == "scaffold" ]] ; then
-            exec odoo "$@" " --load=web,attachment_s3"
+            exec odoo "$@"
         else
-            exec odoo "$@" "${DB_ARGS[@]}" " --load=web,attachment_s3"
+            exec odoo "$@" "${DB_ARGS[@]}"
         fi
         ;;
     -*)
-        exec odoo "$@" "${DB_ARGS[@]}" " --load=web,attachment_s3"
+        exec odoo "$@" "${DB_ARGS[@]}"
         ;;
     *)
         exec "$@"
