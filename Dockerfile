@@ -1,5 +1,5 @@
 FROM odoo:14
-LABEL maintainer="Nonpawit Teerachetmongkol <nonpawit.tee@aginix.tech>"
+LABEL maintainer="Alejandro Hernandez <alejandrojaez@outlook.com>"
 
 # Copy to Workdir
 COPY ./requirements.txt ./
