@@ -9,6 +9,10 @@
       "description": "The port the postgres server is listening to.",
       "required": true
     },
+    "DB_NAME": {
+      "description": "The database name.",
+      "required": true
+    },
     "DB_USER": {
       "description": "The postgres role with which Odoo will connect. If you used a postgres container, set to the same value as POSTGRES_USER.",
       "required": true
