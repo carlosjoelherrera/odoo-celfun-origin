@@ -182,7 +182,7 @@ class IrAttachment(models.Model):
         if self._is_file_from_a_store(fname):
             return self._store_file_read(fname, bin_size=bin_size)
         else:
-            return super()._file_read(fname, bin_size=bin_size)
+            return super()._file_read(fname)
 
     def _store_file_read(self, fname, bin_size=False):
         storage = fname.partition('://')[0]
