@@ -13,8 +13,8 @@ COPY ./entrypoint.sh /
 # Odoo addons
 COPY ./local-src /odoo/local-src
 COPY ./external-src /odoo/external-src
-#COPY ./addons /mnt/extra-addons
-#RUN chown odoo /mnt/extra-addons
+COPY ./addons /mnt/extra-addons
+RUN chown odoo /mnt/extra-addons
 
 COPY ./config /etc/odoo
 
