@@ -232,7 +232,7 @@ class IrAttachment(models.Model):
     @api.model
     def _file_delete(self, fname):
         if self._is_file_from_a_store(fname):
-            cr = self.env.cr
+            cr = self._cr
             # using SQL to include files hidden through unlink or due to record
             # rules
             cr.execute("SELECT COUNT(*) FROM ir_attachment "
@@ -260,7 +260,7 @@ class IrAttachment(models.Model):
         with api.Environment.manage():
             if new_cr:
                 registry = odoo.modules.registry.RegistryManager.get(
-                    self.env.cr.dbname
+                    self._cr.dbname
                 )
                 with closing(registry.cursor()) as cr:
                     try:
@@ -399,7 +399,7 @@ class IrAttachment(models.Model):
                         # check that no other transaction has
                         # locked the row, don't send a file to storage
                         # in that case
-                        self.env.cr.execute("SELECT id "
+                        self._cr.execute("SELECT id "
                                             "FROM ir_attachment "
                                             "WHERE id = %s "
                                             "FOR UPDATE NOWAIT",
